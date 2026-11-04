@@ -1,0 +1,8 @@
+---
+env_name: preprod
+nova_replicas: 1
+nova_hostname: hello.preprod.nova.local
+nova_greeting: "Hello NOVA — Préprod"
+nova_network_policy: false
+nova_api_token: "{{ vault_nova_api_token }}"    # la valeur réelle est chiffrée dans vault.yml
+access_users: [alice, bob]

@@ -1,0 +1,7 @@
+{
+  // Les YAML d'Ansible sont validés par l'extension Ansible, pas par les schémas génériques :
+  // sans cela, playbooks/cluster.yml est pris pour une config RKE (Rancher).
+  "files.associations": {
+    "**/ansible/**/*.yml": "ansible"
+  }
+}
