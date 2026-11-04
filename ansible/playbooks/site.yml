@@ -1,0 +1,12 @@
+---
+# Chaîne complète : socle, cluster, durcissement, déploiement, audit
+- name: Socle
+  ansible.builtin.import_playbook: baseline.yml
+- name: Cluster
+  ansible.builtin.import_playbook: cluster.yml
+- name: Durcissement
+  ansible.builtin.import_playbook: harden.yml
+- name: Déploiement
+  ansible.builtin.import_playbook: deploy.yml
+- name: Audit
+  ansible.builtin.import_playbook: audit.yml

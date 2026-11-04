@@ -1,0 +1,69 @@
+---
+- name: Créer le répertoire des spécifications
+  ansible.builtin.file:
+    path: "{{ goss_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Installer Goss {{ goss_version }}
+  ansible.builtin.get_url:
+    url: "https://github.com/goss-org/goss/releases/download/{{ goss_version }}/goss-linux-{{ goss_arch }}"
+    dest: /usr/local/bin/goss
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Déposer les spécifications de conformité
+  ansible.builtin.copy:
+    src: "{{ goss_specs_src }}/{{ item }}"
+    dest: "{{ goss_dir }}/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ goss_specs }}"
+
+- name: Générer les valeurs attendues pour cet environnement
+  ansible.builtin.template:
+    src: goss-vars.yaml.j2
+    dest: "{{ goss_dir }}/vars.yaml"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Exécuter l'audit
+  ansible.builtin.command: >-
+    goss --vars {{ goss_dir }}/vars.yaml --gossfile {{ goss_dir }}/{{ item }}
+    validate --format documentation --no-color
+  loop: "{{ goss_specs }}"
+  register: goss_results
+  changed_when: false
+  failed_when: false
+
+# Résumé par fichier (ligne "Count: …" et détail des échecs) : boucler sur les résultats
+# bruts afficherait toute la sortie de chaque commande dans le verdict.
+- name: Résumer les résultats de l'audit
+  ansible.builtin.set_fact:
+    goss_verdicts: >-
+      {{ goss_verdicts | default([]) + [{
+        'file': item.item,
+        'rc': item.rc,
+        'summary': item.stdout_lines | select('match', '^Count:') | first | default('Count: ?'),
+        'failures': '' if item.rc == 0 else
+          (item.stdout.split('Failures/Skipped:') | last) | regex_replace('(?s)\n\s*Total Duration.*$', '') | trim
+      }] }}
+  loop: "{{ goss_results.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+
+# Boucle sur les noms de fichiers (et non sur les résumés) : l'affichage reste à une ligne par fichier.
+- name: Verdict de conformité
+  ansible.builtin.assert:
+    that: goss_verdicts[idx].rc == 0
+    fail_msg: "{{ item }} : NON CONFORME ({{ goss_verdicts[idx].summary }})\n{{ goss_verdicts[idx].failures }}"
+    success_msg: "{{ item }} : conforme ({{ goss_verdicts[idx].summary }})"
+    quiet: false
+  loop: "{{ goss_verdicts | map(attribute='file') | list }}"
+  loop_control:
+    index_var: idx

@@ -1,0 +1,36 @@
+# Conformité de la couche Kubernetes : valeurs attendues injectées depuis l'inventaire
+service:
+  k3s: { enabled: true, running: true }
+
+port:
+  # k3s écoute en double pile (*:6443) : Goss le voit comme tcp6
+  tcp6:6443: { listening: true }
+
+command:
+  node_ready:
+    exec: "k3s kubectl get nodes --no-headers"
+    exit-status: 0
+    stdout: ["Ready"]
+  # Le port 80 est publié par le ServiceLB de k3s (règles iptables, aucune socket en écoute) :
+  # on teste donc la réponse HTTP réelle de l'Ingress plutôt qu'un port "listening".
+  ingress_http:
+    exec: "curl -s -o /dev/null -w '%{http_code}' -m 5 -H 'Host: {{ .Vars.hostname }}' http://{{ .Vars.node_ip }}/"
+    exit-status: 0
+    stdout: ["200"]
+  # nombre de réplicas disponibles = valeur de l'inventaire
+  replicas_available:
+    exec: "k3s kubectl -n nova get deploy nova-hello -o jsonpath='{.status.availableReplicas}'"
+    exit-status: 0
+    stdout: ["{{ .Vars.replicas }}"]
+  # PSSI-09 : conteneur non privilégié, système de fichiers en lecture seule
+  readonly_rootfs:
+    exec: "k3s kubectl -n nova get deploy nova-hello -o jsonpath='{.spec.template.spec.containers[0].securityContext.readOnlyRootFilesystem}'"
+    exit-status: 0
+    stdout: ["true"]
+{{ if eq .Vars.netpol "true" }}
+  # PSSI-08 : isolation réseau applicative exigée en production
+  networkpolicy_present:
+    exec: "k3s kubectl -n nova get networkpolicy nova-hello -o name"
+    exit-status: 0
+    stdout: ["networkpolicy"]
+{{ end }}
