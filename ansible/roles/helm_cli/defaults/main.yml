@@ -1,0 +1,6 @@
+---
+helm_version: v3.16.4
+# Architecture du binaire : amd64 (PC x86) ou arm64 (Mac Apple Silicon)
+helm_arch: "{{ 'arm64' if ansible_architecture in ['aarch64', 'arm64'] else 'amd64' }}"
+# Version du plugin helm-diff épinglée : les versions récentes exigent un Helm plus récent que 3.16
+helm_diff_version: 3.9.14
