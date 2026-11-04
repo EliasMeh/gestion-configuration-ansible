@@ -1,0 +1,16 @@
+# {{ ansible_managed }}
+# ServiceLB publie Traefik par des règles iptables (DNAT) qui passent avant ufw :
+# la liste blanche des ports 80/443 est donc appliquée ici, par loadBalancerSourceRanges.
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    service:
+      spec:
+        loadBalancerSourceRanges:
+{% for src in hardening_ingress_sources %}
+          - {{ src }}
+{% endfor %}

@@ -1,0 +1,92 @@
+---
+- name: Créer le répertoire des charts sur le nœud
+  ansible.builtin.file:
+    path: /opt/nova/charts
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Publier le chart sur le nœud (artefact versionné)
+  ansible.builtin.copy:
+    src: "{{ nova_chart_src }}/"            # le "/" final copie le CONTENU du dossier
+    dest: "{{ nova_chart_dest }}/"
+    owner: root
+    group: root
+    mode: "0644"
+    directory_mode: "0755"
+
+- name: Déploiement protégé (release + smoke test + rollback automatique)
+  block:
+    - name: Déployer ou mettre à jour la release Helm
+      kubernetes.core.helm:
+        name: "{{ nova_release_name }}"
+        chart_ref: "{{ nova_chart_dest }}"
+        release_namespace: "{{ nova_namespace }}"
+        create_namespace: true
+        kubeconfig: "{{ nova_kubeconfig }}"
+        wait: true                          # attend que les pods soient prêts
+        timeout: 3m                         # (wait_timeout est déprécié dans kubernetes.core 5)
+        atomic: true                        # annule seul en cas d'échec
+        # <-- LE POINT DE JONCTION : inventaire -> valeurs Helm.
+        # Une seule expression Jinja qui produit un dictionnaire : les types (int, bool) sont
+        # conservés. Des valeurs "{{ x | int }}" imbriquées arriveraient en texte et le schéma
+        # du chart les refuserait ("replicaCount: Expected integer, given string").
+        values: >-
+          {{ {
+            'replicaCount': nova_replicas | int,
+            'image': {'repository': nova_image_repository, 'tag': nova_image_tag},
+            'app': {'environment': env_name, 'greeting': nova_greeting, 'version': nova_app_version | string},
+            'ingress': {'host': nova_hostname},
+            'networkPolicy': {'enabled': nova_network_policy | bool},
+            'secret': {'apiToken': nova_api_token}
+          } }}
+      register: nova_helm_result
+      # Secret dans les valeurs : jamais affiché. -e nova_no_log=false seulement pour déboguer, avec un jeton factice.
+      # En --check, no_log masquerait aussi le diff : helm-diff y cache déjà le contenu des Secrets.
+      no_log: "{{ (nova_no_log | default(true) | bool) and not ansible_check_mode }}"
+
+    - name: Afficher la révision déployée
+      ansible.builtin.debug:
+        msg: >-
+          {{ nova_release_name }} déployée en révision
+          {{ nova_helm_result.status.revision | default('(aucune : simulation --check)') }} sur {{ env_name }}
+
+    - name: Smoke test HTTP depuis le poste de contrôle
+      ansible.builtin.uri:
+        url: "http://{{ hostvars[inventory_hostname].ansible_host }}/"
+        headers:
+          Host: "{{ nova_hostname }}"
+        return_content: true
+        status_code: 200
+      register: nova_smoke
+      delegate_to: localhost
+      become: false
+      retries: 10
+      delay: 6
+      until: nova_smoke.status == 200 and (nova_smoke_expect in nova_smoke.content)
+      changed_when: false
+
+  rescue:
+    - name: Lire l'état courant de la release
+      kubernetes.core.helm_info:
+        name: "{{ nova_release_name }}"
+        release_namespace: "{{ nova_namespace }}"
+        kubeconfig: "{{ nova_kubeconfig }}"
+      register: nova_info
+
+    - name: Rollback vers la révision précédente (seulement si Helm a réussi mais le test a échoué)
+      ansible.builtin.command: >-
+        helm rollback {{ nova_release_name }} {{ (nova_info.status.revision | int) - 1 }}
+        --namespace {{ nova_namespace }} --wait --timeout 3m
+      environment:
+        KUBECONFIG: "{{ nova_kubeconfig }}"
+      when:
+        - nova_helm_result is defined
+        - nova_helm_result is succeeded
+        - (nova_info.status.revision | default(0) | int) > 1
+      changed_when: true
+
+    - name: Échec explicite (stoppe la promotion)
+      ansible.builtin.fail:
+        msg: "Déploiement invalide sur {{ env_name }} : retour à l'état précédent, promotion stoppée."
