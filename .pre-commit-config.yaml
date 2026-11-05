@@ -20,6 +20,13 @@ repos:
           bash -c 'for f in "$@"; do head -1 "$f" | grep -q "^[$]ANSIBLE_VAULT" || { echo "NON CHIFFRE - $f"; exit 1; }; done' --
         language: system
         files: vault\.yml$
+      - id: forbid-plain-sops
+        name: refuser un fichier *.sops.yaml non chiffré
+        entry: >-
+          bash -c 'for f in "$@"; do grep -q "^sops:" "$f" || { echo "NON CHIFFRE - $f"; exit 1; }; done' --
+        language: system
+        # tout fichier <nom>.sops.yaml (le support ne visait que secrets.sops.yaml), pas le .sops.yaml racine
+        files: /[^/]+\.sops\.ya?ml$
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0
     hooks:
