@@ -1,0 +1,12 @@
+---
+- name: Converge
+  hosts: all
+  gather_facts: true
+  vars:
+    nova_appconf_settings:
+      log_level: warn
+      listen_port: "9090"
+    nova_appconf_secrets:
+      api_token: tok-molecule-0001
+  roles:
+    - role: nova_appconf

@@ -1,0 +1,12 @@
+---
+galaxy_info:
+  role_name: nova_appconf
+  namespace: nova
+  author: Equipe plateforme NOVA
+  description: Réglages applicatifs NOVA posés avec le module maison nova.platform.nova_setting
+  license: GPL-3.0-or-later
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Ubuntu
+      versions: [jammy]
+dependencies: []

@@ -1,0 +1,27 @@
+# Garde-fous exécutés AVANT chaque commit (installation : pre-commit install)
+repos:
+  - repo: local
+    hooks:
+      - id: yamllint
+        name: yamllint (style YAML)
+        entry: yamllint -c .yamllint
+        language: system
+        types: [yaml]
+        exclude: ^(charts/|ansible/inventories/group_vars/.*/vault\.yml)
+      - id: ansible-lint
+        name: ansible-lint (bonnes pratiques)
+        entry: bash -c 'cd ansible && ansible-lint -c ../.ansible-lint playbooks roles'
+        language: system
+        pass_filenames: false
+        files: ^ansible/
+      - id: forbid-plain-vault
+        name: refuser un vault.yml non chiffré
+        entry: >-
+          bash -c 'for f in "$@"; do head -1 "$f" | grep -q "^[$]ANSIBLE_VAULT" || { echo "NON CHIFFRE - $f"; exit 1; }; done' --
+        language: system
+        files: vault\.yml$
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']

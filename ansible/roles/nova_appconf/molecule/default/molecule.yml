@@ -1,0 +1,17 @@
+---
+driver:
+  name: podman
+platforms:
+  - name: nova-ubuntu
+    image: docker.io/geerlingguy/docker-ubuntu2204-ansible:latest
+    pre_build_image: true
+provisioner:
+  name: ansible
+  env:
+    ANSIBLE_COLLECTIONS_PATH: /vagrant/ansible/collections
+    ANSIBLE_ROLES_PATH: /vagrant/ansible/roles
+  config_options:
+    defaults:
+      interpreter_python: auto_silent
+verifier:
+  name: ansible

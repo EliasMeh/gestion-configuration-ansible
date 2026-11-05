@@ -8,3 +8,6 @@ __pycache__/
 .DS_Store
 reports/
 golden/*.box
+# collections téléchargées (requirements*.yml) : seule la collection maison est versionnée
+ansible/collections/ansible_collections/*
+!ansible/collections/ansible_collections/nova/

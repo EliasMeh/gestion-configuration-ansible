@@ -1,0 +1,28 @@
+---
+- name: Verify
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Lire les informations du fichier
+      ansible.builtin.stat:
+        path: /etc/nova/app.conf
+      register: conf
+
+    - name: Lire le contenu
+      ansible.builtin.slurp:
+        src: /etc/nova/app.conf
+      register: content
+
+    - name: Le fichier existe avec les droits attendus
+      ansible.builtin.assert:
+        that:
+          - conf.stat.exists
+          - conf.stat.mode == '0640'
+          - conf.stat.pw_name == 'root'
+
+    - name: Le contenu est celui voulu
+      ansible.builtin.assert:
+        that:
+          - "'log_level = warn' in (content.content | b64decode)"
+          - "'listen_port = 9090' in (content.content | b64decode)"
+          - "'api_token = tok-molecule-0001' in (content.content | b64decode)"

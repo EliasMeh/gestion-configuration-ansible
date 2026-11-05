@@ -1,0 +1,30 @@
+---
+- name: Dossier de configuration NOVA
+  ansible.builtin.file:
+    path: "{{ nova_appconf_path | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Réglages applicatifs (module maison)
+  nova.platform.nova_setting:
+    path: "{{ nova_appconf_path }}"
+    key: "{{ item.key }}"
+    value: "{{ item.value }}"
+    mode: "{{ nova_appconf_mode }}"
+  loop: "{{ nova_appconf_settings | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+
+- name: Secrets applicatifs (jamais affichés)
+  nova.platform.nova_setting:
+    path: "{{ nova_appconf_path }}"
+    key: "{{ item.key }}"
+    value: "{{ item.value }}"
+    secret: true
+    mode: "{{ nova_appconf_mode }}"
+  loop: "{{ nova_appconf_secrets | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+  no_log: true

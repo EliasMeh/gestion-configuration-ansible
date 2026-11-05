@@ -1,0 +1,6 @@
+---
+nova_appconf_path: /etc/nova/app.conf
+nova_appconf_mode: "0640"                # le fichier contient des secrets : jamais lisible par tous
+nova_appconf_settings:
+  log_level: info
+nova_appconf_secrets: {}

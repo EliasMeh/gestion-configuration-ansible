@@ -1,0 +1,13 @@
+---
+# Dépendances de la série avancée (en plus de requirements.yml)
+collections:
+  - name: containers.podman          # driver Molecule (TP A4), registre OCI (TP A9)
+    version: ">=1.10.0,<2.0.0"
+  - name: community.sops             # plugin de variables SOPS (TP A5)
+    version: ">=1.6.0,<3.0.0"
+  - name: ansible.posix
+    version: ">=1.5.0,<3.0.0"
+  - name: community.general
+    version: ">=9.0.0,<11.0.0"
+  - name: kubernetes.core
+    version: ">=5.0.0,<6.0.0"
