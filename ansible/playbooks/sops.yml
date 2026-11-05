@@ -1,0 +1,35 @@
+---
+# Installe sops et age sur ctrl (TP A5) : ansible-playbook playbooks/sops.yml
+- name: Outils de chiffrement des secrets (SOPS + age)
+  hosts: localhost
+  connection: local
+  become: true
+  vars:
+    sops_version: "3.9.4"
+    age_version: "1.2.1"
+    tools_arch: "{{ 'arm64' if ansible_architecture in ['aarch64', 'arm64'] else 'amd64' }}"
+  tasks:
+    - name: Installer sops {{ sops_version }}
+      ansible.builtin.get_url:
+        url: "https://github.com/getsops/sops/releases/download/v{{ sops_version }}/sops-v{{ sops_version }}.linux.{{ tools_arch }}"
+        dest: /usr/local/bin/sops
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Télécharger age {{ age_version }}
+      ansible.builtin.unarchive:
+        src: "https://github.com/FiloSottile/age/releases/download/v{{ age_version }}/age-v{{ age_version }}-linux-{{ tools_arch }}.tar.gz"
+        dest: /opt
+        remote_src: true
+        creates: /opt/age/age
+
+    - name: Installer age et age-keygen
+      ansible.builtin.copy:
+        src: "/opt/age/{{ item }}"
+        dest: "/usr/local/bin/{{ item }}"
+        remote_src: true
+        owner: root
+        group: root
+        mode: "0755"
+      loop: [age, age-keygen]

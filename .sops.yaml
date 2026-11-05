@@ -1,0 +1,5 @@
+creation_rules:
+  - path_regex: ansible/inventories/group_vars/preprod/.*\.sops\.ya?ml$
+    age: age1vy63ztlpw5l7gvava6q885y2fdhdw4dwnprcfvrwz3zxahgux4eq850jx0
+  - path_regex: ansible/inventories/group_vars/prod/.*\.sops\.ya?ml$
+    age: age1shgttvyj7yukrctm3e2l3m2wpv9e4c4zpac2mun7425t7pe6t98qmtgu6l
