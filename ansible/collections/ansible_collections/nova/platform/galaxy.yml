@@ -1,0 +1,13 @@
+---
+namespace: nova
+name: platform
+version: 1.0.0
+readme: README.md
+authors:
+  - Equipe plateforme NOVA
+description: Modules et filtres internes NOVA pour la gestion de configuration
+license:
+  - GPL-3.0-or-later
+tags: [nova, configuration]
+dependencies: {}
+repository: https://example.invalid/nova/platform

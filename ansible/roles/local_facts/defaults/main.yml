@@ -1,0 +1,3 @@
+---
+local_facts_dir: /etc/ansible/facts.d
+local_facts_pssi_version: "2.0"

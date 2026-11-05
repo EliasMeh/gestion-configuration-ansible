@@ -1,0 +1,28 @@
+---
+- name: Faits locaux et classement dynamique par criticité
+  hosts: nova
+  become: true
+  roles:
+    - role: local_facts
+      tags: [facts]
+  tasks:
+    - name: Classer les machines selon leurs faits locaux
+      ansible.builtin.group_by:
+        key: "maint_{{ 'urgente' if ansible_local.runtime.pending_updates | int > 0 else 'ok' }}"
+      changed_when: false       # group_by signale toujours changed : ce n'est pas une modification de la machine
+
+    - name: Rapport de situation
+      ansible.builtin.debug:
+        msg: >-
+          {{ inventory_hostname }} : env={{ ansible_local.nova.environment }},
+          criticité={{ ansible_local.nova.criticality }},
+          fenêtre={{ ansible_local.nova.maintenance_window }},
+          mises à jour en attente={{ ansible_local.runtime.pending_updates }}
+
+- name: Seulement les machines avec des mises à jour en attente
+  hosts: maint_urgente
+  gather_facts: false
+  tasks:
+    - name: Annonce
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }} a des correctifs à appliquer pendant sa fenêtre {{ cmdb_maintenance_window }}"

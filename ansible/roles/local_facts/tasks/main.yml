@@ -1,0 +1,36 @@
+---
+- name: Créer le répertoire des faits locaux
+  ansible.builtin.file:
+    path: "{{ local_facts_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Fait statique issu de l'inventaire (nova.fact)
+  ansible.builtin.template:
+    src: nova.fact.j2
+    dest: "{{ local_facts_dir }}/nova.fact"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Fait dynamique exécutable (runtime.fact)
+  ansible.builtin.template:
+    src: runtime.fact.j2
+    dest: "{{ local_facts_dir }}/runtime.fact"
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Dossier de suivi des audits
+  ansible.builtin.file:
+    path: /var/lib/nova
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Recharger les facts pour que les nouveaux faits soient visibles tout de suite
+  ansible.builtin.setup:
+    filter: ansible_local

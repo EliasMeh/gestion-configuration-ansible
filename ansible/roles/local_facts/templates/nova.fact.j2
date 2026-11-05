@@ -1,0 +1,7 @@
+{{ {
+  'environment': env_name,
+  'pssi_version': local_facts_pssi_version,
+  'owner': cmdb_owner | default('inconnu'),
+  'criticality': cmdb_criticality | default('medium'),
+  'maintenance_window': cmdb_maintenance_window | default('non défini')
+} | to_nice_json }}

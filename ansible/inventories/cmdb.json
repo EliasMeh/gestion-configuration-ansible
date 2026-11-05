@@ -1,0 +1,9 @@
+{
+  "_comment": "Extrait de la CMDB NOVA : la liste officielle des serveurs, leurs propriétaires et leur criticité.",
+  "servers": [
+    { "hostname": "node-preprod", "ip": "192.168.56.21", "env": "preprod", "roles": ["k3s_server"],
+      "owner": "equipe-plateforme", "criticality": "low",  "maintenance_window": "mar 10:00-12:00" },
+    { "hostname": "node-prod",    "ip": "192.168.56.22", "env": "prod",    "roles": ["k3s_server"],
+      "owner": "equipe-exploitation", "criticality": "high", "maintenance_window": "dim 02:00-04:00" }
+  ]
+}

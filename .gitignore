@@ -3,3 +3,8 @@
 ansible/.vault_pass_*
 *.retry
 *.log
+__pycache__/
+.pytest_cache/
+.DS_Store
+reports/
+golden/*.box

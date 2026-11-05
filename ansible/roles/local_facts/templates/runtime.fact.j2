@@ -1,0 +1,7 @@
+#!/bin/sh
+# {{ ansible_managed }}
+# Fait dynamique : exécuté à CHAQUE collecte de facts, doit afficher du JSON.
+uptime_days=$(awk '{printf "%d", $1/86400}' /proc/uptime)
+last_audit=$(cat /var/lib/nova/last-audit 2>/dev/null || echo "jamais")
+pending=$(apt-get -s upgrade 2>/dev/null | grep -c '^Inst' || true)
+printf '{"uptime_days": %s, "last_audit": "%s", "pending_updates": %s}\n' "$uptime_days" "$last_audit" "$pending"
