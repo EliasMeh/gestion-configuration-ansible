@@ -1,0 +1,20 @@
+# Déploiement fautif écrit à la main (TP A6) : quatre défauts, tous attendus par la politique.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nova-bricolage
+  labels:
+    nova/environment: prod
+spec:
+  replicas: 1                       # défaut 1 : la production exige 2 réplicas
+  selector:
+    matchLabels: {app: nova-bricolage}
+  template:
+    metadata:
+      labels: {app: nova-bricolage}
+    spec:                           # défaut 2 : aucun securityContext runAsNonRoot
+      containers:
+        - name: web
+          image: nginx:latest       # défaut 3 : tag latest
+          resources:                # défaut 4 : pas de limite de mémoire
+            requests: {cpu: 50m}

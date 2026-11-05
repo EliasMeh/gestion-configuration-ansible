@@ -27,6 +27,14 @@ repos:
         language: system
         # tout fichier <nom>.sops.yaml (le support ne visait que secrets.sops.yaml), pas le .sops.yaml racine
         files: /[^/]+\.sops\.ya?ml$
+  - repo: local
+    hooks:
+      - id: nova-policy
+        name: politiques NOVA (conftest)
+        entry: scripts/policy-check.sh
+        language: system
+        pass_filenames: false
+        files: ^(charts/|policy/|ansible/inventories/)
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0
     hooks:
