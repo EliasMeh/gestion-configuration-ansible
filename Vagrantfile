@@ -14,10 +14,11 @@ NODES = {
 Vagrant.configure("2") do |config|
   config.vm.box = "bento/ubuntu-22.04"       # image Ubuntu 22.04 LTS (amd64 ou arm64 selon l'hôte)
   config.vm.box_check_update = false         # évite une vérification réseau à chaque 'up'
-  # Le dépôt est partagé hôte <-> VMs. Les modes évitent un dossier "world writable"
-  # (Ansible ignorerait ansible.cfg) et des fichiers exécutables (Ansible exécuterait
-  # les .vault_pass_* comme des scripts au lieu de les lire).
-  config.vm.synced_folder ".", "/vagrant", mount_options: ["dmode=775", "fmode=664"]
+  # Le dépôt est partagé hôte <-> VMs. dmode=775 évite un dossier "world writable"
+  # (Ansible ignorerait ansible.cfg). Série avancée : fmode=775, car l'inventaire
+  # dynamique, les hooks Git et les scripts doivent être exécutables (vboxsf ignore chmod).
+  # Les mots de passe Vault sont donc lus hors du partage (~/.nova-vault, voir ansible.cfg).
+  config.vm.synced_folder ".", "/vagrant", mount_options: ["dmode=775", "fmode=775"]
 
   NODES.each do |name, cfg|                  # ctrl est déclarée en premier : elle démarre en premier
     config.vm.define name do |node|
